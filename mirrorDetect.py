@@ -50,9 +50,9 @@ class MirrorDetect(Detection):
 			mirror_cnts = sorted(contours, key=cv.contourArea, reverse=True)[:5]
 			for i, cnt in enumerate(mirror_cnts):
 				epsilon = 0.02 * cv.arcLength(cnt, True)
-				aprox = cv.approxPolyDP(cnt, epsilon, True)
-				prev = self.last_contours[i] if i < len(self.last_contours) else None
-				smooth = self.wrap_contour(prev, aprox, 0.5)
+				aproxcurrent = cv.approxPolyDP(cnt, epsilon, True)
+				current = self.last_contours[i] if i < len(self.last_contours) else None
+				smooth = self.wrap_contour(current, aproxcurrent, 0.5)
 				smooth_cnt.append(smooth)
 		
 		
@@ -78,9 +78,9 @@ class MirrorDetect(Detection):
 
 		return mid
 
-	def wrap_contour(self, prev, current, alpha=0.5):
-		if prev is None or len(prev) != len(current):
-			return current
-		return np.int32(prev * (1 - alpha) + current * alpha)
+	def wrap_contour(self, current, aproxcurrent, alpha=0.5):
+		if current is None or len(current) != len(aproxcurrent):
+			return aproxcurrent
+		return np.int32(current * (1 - alpha) + aproxcurrent * alpha)
 
 	
