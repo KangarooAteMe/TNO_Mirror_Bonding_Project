@@ -1,4 +1,5 @@
 
+
 from detection import Detection
 import cv2 as cv
 import numpy as np
@@ -44,16 +45,16 @@ class MirrorDetect(Detection):
 		contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
      
 		output = self.frame.copy()
-		
+		smooth_cnt = []
 		if contours:
-			smooth_cnt = []
 			mirror_cnts = sorted(contours, key=cv.contourArea, reverse=True)[:5]
 			for i, cnt in enumerate(mirror_cnts):
 				epsilon = 0.02 * cv.arcLength(cnt, True)
-				aproxcurrent = cv.approxPolyDP(cnt, epsilon, True)
-				current = self.last_contours[i] if i < len(self.last_contours) else None
-				smooth = self.wrap_contour(current, aproxcurrent, 0.5)
+				aprox = cv.approxPolyDP(cnt, epsilon, True)
+				prev = self.last_contours[i] if i < len(self.last_contours) else None
+				smooth = self.wrap_contour(prev, aprox, 0.5)
 				smooth_cnt.append(smooth)
+
 		
 		
 		self.last_contours = smooth_cnt
@@ -75,12 +76,23 @@ class MirrorDetect(Detection):
 			mid.append(None)
 
 		print(mid)
+		self.flatlist = [x for mini in mid if mini is not None for x in mini]
+		print(self.flatlist)
+		return self.flatlist
+	
+	def findOrientation(flatlist, abs1, abs2, abs3):
+		Manhatten1 = sum(abs(flatlist - abs1) for flatlist, abs1 in zip(flatlist, abs1))
+		Manhatten2 = sum(abs(flatlist- abs2) for flatlist, abs2 in zip(flatlist, abs2))
+		Manhatten3 = sum(abs(flatlist - abs3) for flatlist, abs3 in zip(flatlist, abs3))
+		Manhattenmatch = min(Manhatten1, Manhatten2, Manhatten3)
 
-		return mid
+		return Manhattenmatch
 
-	def wrap_contour(self, current, aproxcurrent, alpha=0.5):
-		if current is None or len(current) != len(aproxcurrent):
-			return aproxcurrent
-		return np.int32(current * (1 - alpha) + aproxcurrent * alpha)
+
+
+	def wrap_contour(self, prev, current, alpha=0.5):
+		if prev is None or len(prev) != len(current):
+			return current
+		return np.int32(prev * (1 - alpha) + current * alpha)
 
 	
