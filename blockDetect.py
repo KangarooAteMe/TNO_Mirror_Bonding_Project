@@ -1,3 +1,4 @@
+
 from detection import Detection
 import numpy as np
 import cv2 as cv
@@ -17,28 +18,36 @@ class blockDetection(Detection):
         cv.namedWindow("Edges")
         
         img = cv.imread(im)
-        imgres = cv.resize(img, (1000, 1000), interpolation=cv.INTER_CUBIC)
-        grey = cv.cvtColor(imgres, cv.COLOR_BGR2GRAY)
+        imgres = cv.resize(img, (1000, 1000), interpolation=cv.INTER_CUBIC) #resize the image, interpolation to keep details where possible
+        grey = cv.cvtColor(imgres, cv.COLOR_BGR2GRAY) #convert to greyscale
+
+        ########################################################
+        # use dilation/erosion to try and remove noise
+        ########################################################
         kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5,5))
         final = cv.morphologyEx(grey, cv.MORPH_OPEN, kernel)
+       
+        ########################################################
+        # Use trackbars to find the ideal lower and upper thresholds
+        ########################################################
+        
         cv.createTrackbar("Min Threshold", "Edges", 0, 255, self.nothing)
         cv.createTrackbar("Max Threshold", "Edges", 0, 255, self.nothing)
         while True:
             im_copy = imgres.copy()
             thresh1 = int(max(0, 0.66 * cv.getTrackbarPos("Min Threshold", "Edges")))
 
-            thresh2 = int(min(0, 1.33 * cv.getTrackbarPos("Max Threshold", "Edges")))
+            thresh2 = int(min(255, 1.33 * cv.getTrackbarPos("Max Threshold", "Edges")))
             
-           
-            self.edgesfin = cv.Canny(self.edges, thresh1, thresh2)
+            self.edgesfin = cv.Canny(final, thresh1, thresh2) # Edge detection
 
             cv.imshow("Original", self.edgesfin)
             cv.waitKey(300)
-            self.contours, _ = cv.findContours(self.edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+            self.contours, _ = cv.findContours(self.edgesfin, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE) # find the contours of the edges
 
             for i, a in (enumerate(self.contours)):
                 area = cv.contourArea(a)
-                if area < 20:
+                if area < 5: # skip very small contours
                     continue
                 
                 self.finimg = cv.drawContours(im_copy, [a], -1, (0,255,0), 3)
@@ -55,8 +64,8 @@ class blockDetection(Detection):
         M = cv.moments(contours)
         if M["m00"] == 0:
             return None, None
-        cx = int(M["m10"] / M["m00"])
-        cy = int(M["m01"] / M["m00"])
+        cx = int(M["m10"] / M["m00"]) #use Moments to find centerx coordinate of block
+        cy = int(M["m01"] / M["m00"]) #use Moments to find centery coordinate of block
         center = (cx, cy)
         cv.putText(self.finimg, "Center", center, cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
         cv.circle(self.finimg, center, 5, (255,0,0), -1)
@@ -73,18 +82,29 @@ class blockDetection(Detection):
     def getOrientation(self, fincont, img):
 
 
-        rotimg = cv.minAreaRect(fincont)
+        rotimg = cv.minAreaRect(fincont) #rectangle around the contour
         box = cv.boxPoints(rotimg)
         box = box.astype(int)
-        self.rotation = rotimg[-1]
+        self.rotation = rotimg[-1] #last value of minarearect is angle
 
         cntr = (int(rotimg[0][0]), int(rotimg[0][1]))
+
+        ############################################
+        #Correct the rotations
+        ############################################
         if self.rotation < -45:
             self.rotation = (90 + self.rotation)
 
         else:
             self.rotation = self.rotation
 
+        #######################################################
+        # code to find side that deviates, currently not entirely functional,
+        # compares all contourpoints' distance to the midpoint of the shape.the code
+        # works by quadrant of the contour instead of sides, this means that diagonal blocks arent computed correctly
+        # and corners are being seen as the biggest deviating point in the diagonal blocks. fix by assigning points to a specific side
+        # also check if comparing only the midpoints of each side would work.
+        ########################################################
 
         center = (cntr[0], cntr[1])
         contourpoints = fincont.reshape(-1, 2)
@@ -105,3 +125,4 @@ class blockDetection(Detection):
         
         print("Rotation: ", int(self.rotation))
         return self.rotation
+
