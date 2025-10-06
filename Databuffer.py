@@ -14,7 +14,7 @@ class Databuffer:
         self.datablk = self.blk.getVals()
         self.datamir = self.mir.getVals()
         self.arrayify.append(self.datablk)
-        self.arrayify.append(self.datamir)
+        self.arrayify.append(self.datamir) ### not send correctly yet
         print(self.arrayify) 
 
         
