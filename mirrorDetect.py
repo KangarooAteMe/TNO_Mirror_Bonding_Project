@@ -38,7 +38,6 @@ class MirrorDetect(Detection):
 		mask = cv.inRange(hsv, self.lr, self.ur)
 		mask2 = cv.inRange(hsv, self.lr2, self.ur2)
 
-
 		mask = cv.bitwise_or(mask, mask2) #combine the masks to smoothen the contour
     
 		mask = cv.morphologyEx(mask, cv.MORPH_OPEN, self.kernel) # dilate, erode mask
@@ -55,9 +54,7 @@ class MirrorDetect(Detection):
 				aprox = cv.approxPolyDP(cnt, epsilon, True) # approximate contours
 				prev = self.last_contours[i] if i < len(self.last_contours) else None # store contour
 				smooth = self.wrap_contour(prev, aprox, 0.5)
-				smooth_cnt.append(smooth)
-
-		
+				smooth_cnt.append(smooth)		
 		
 		self.last_contours = smooth_cnt
 		cv.drawContours(output, smooth_cnt, -1, (0, 255, 0), 2)
@@ -96,8 +93,6 @@ class MirrorDetect(Detection):
 		Manhatten3 = sum(abs(flatlist - abs3) for flatlist, abs3 in zip(flatlist, abs3))
 		keyvaluepair['Manhatten3'][1] = Manhatten3
 		return min(keyvaluepair.values(), key=lambda x: x[1])[0]
-
-
 
 	def wrap_contour(self, prev, current, alpha=0.5):
 		if prev is None or len(prev) != len(current):
