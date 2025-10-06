@@ -7,10 +7,28 @@ from math import atan2
 
 class blockDetection(Detection):
     def __init__(self):
-        pass
+        self.binary = None
+        self.contours = None
+        self.finimg = None
+        self.Pta = None
+        self.Ptb = None
+        self.middles = None
+        self.deviatingside = None
+        self.deviatingangle = None
+        self.refangle = None
+        self.rotation = None
+        self.frame = None
+        self.centre = None
+        self.rotarray = []
+        self.centarray = []
+        
+
 
     def nothing(self, x):
         pass
+
+    def midpointtake(self, ptA, ptB):
+        return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
     def findContour(self, im):
         
@@ -18,41 +36,50 @@ class blockDetection(Detection):
         cv.namedWindow("Edges")
         
         img = cv.imread(im)
-        imgres = cv.resize(img, (1000, 1000), interpolation=cv.INTER_CUBIC) #resize the image, interpolation to keep details where possible
+        imgres = cv.resize(img, (2200, 1000), interpolation=cv.INTER_CUBIC) #resize the image, interpolation to keep details where possible
         grey = cv.cvtColor(imgres, cv.COLOR_BGR2GRAY) #convert to greyscale
+        grey = cv.medianBlur(grey, 1)
 
         ########################################################
         # use dilation/erosion to try and remove noise
         ########################################################
-        kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5,5))
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
         final = cv.morphologyEx(grey, cv.MORPH_OPEN, kernel)
+        final2 = cv.morphologyEx(final, cv.MORPH_CLOSE, kernel)
+
        
         ########################################################
         # Use trackbars to find the ideal lower and upper thresholds
         ########################################################
         
-        cv.createTrackbar("Min Threshold", "Edges", 0, 255, self.nothing)
-        cv.createTrackbar("Max Threshold", "Edges", 0, 255, self.nothing)
-        while True:
-            im_copy = imgres.copy()
-            thresh1 = int(max(0, 0.66 * cv.getTrackbarPos("Min Threshold", "Edges")))
-
-            thresh2 = int(min(255, 1.33 * cv.getTrackbarPos("Max Threshold", "Edges")))
+        
+        im_copy = imgres.copy()
             
-            self.edgesfin = cv.Canny(final, thresh1, thresh2) # Edge detection
+        _, self.binary = cv.threshold(final2, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        self.binary = cv.bitwise_not(self.binary)
+            
+            
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, (3,3))
+            
 
-            cv.imshow("Original", self.edgesfin)
-            cv.waitKey(300)
-            self.contours, _ = cv.findContours(self.edgesfin, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE) # find the contours of the edges
+        self.binary = cv.erode(self.binary, kernel, iterations=7)
+            
 
-            for i, a in (enumerate(self.contours)):
-                area = cv.contourArea(a)
-                if area < 5: # skip very small contours
-                    continue
+            
+            
+
+
+        cv.imshow("Original", self.binary)
+        cv.waitKey(300)
+        self.contours, _ = cv.findContours(self.binary, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE) 
+
+        for i, a in (enumerate(self.contours)):
+            area = cv.contourArea(a)
+            if area < 2: 
+                continue
                 
-                self.finimg = cv.drawContours(im_copy, [a], -1, (0,255,0), 3)
-                self.getCoordinates(a)
-                self.getOrientation(a, im_copy)
+            self.finimg = cv.drawContours(im_copy, [a], -1, (0,255,0), 3)
+            self.getOrientation(a, im_copy)
             cv.imshow("Edges", self.finimg)
             cv.waitKey(300)
             
@@ -60,16 +87,19 @@ class blockDetection(Detection):
         return self.contours
 
 
-    def getCoordinates(self, contours):
+    def getcenterCoordinates(self, contours):
         M = cv.moments(contours)
         if M["m00"] == 0:
             return None, None
         cx = int(M["m10"] / M["m00"]) #use Moments to find centerx coordinate of block
         cy = int(M["m01"] / M["m00"]) #use Moments to find centery coordinate of block
-        center = (cx, cy)
-        cv.putText(self.finimg, "Center", center, cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
-        cv.circle(self.finimg, center, 5, (255,0,0), -1)
+        self.center = (cx, cy)
+        cv.putText(self.finimg, "Center", self.center, cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
+        cv.circle(self.finimg, self.center, 5, (255,0,0), -1)
+        return self.center
     
+    def getCoordinates(self):
+        pass
 
 
     def framegetter(self, frame):
@@ -79,15 +109,95 @@ class blockDetection(Detection):
         self.frame = frame
         return frame
 
+    def straightline_true(self, coords, tol=25):
+         coords = np.array(coords)
+         x = coords[:,0]
+         y = coords[:,1]
+         m, b = np.polyfit(x, y, 1)  
+         res = np.abs(y - (m*x + b))
+         return np.mean(res)  
+
+    def getangle(self, p1, p2):
+        delta_y = p2[1] - p1[1]
+        delta_x = p2[0] - p1[0]
+        angle = atan2(delta_y, delta_x) * 180.0 / np.pi
+        return angle
+
+    def point_to_line_distance(self, pt, line_start, line_end):
+        pt = np.array(pt)
+        line_start = np.array(line_start)
+        line_end = np.array(line_end)
+        line_vec = line_end - line_start
+        pt_vec = pt - line_start
+        line_len = np.dot(line_vec, line_vec)
+        if line_len == 0:
+            return np.linalg.norm(pt - line_start)
+
+        t = np.dot(pt_vec, line_vec) / line_len
+        if 0 <= t <= 1:
+            projection = line_start + t * line_vec
+            return np.linalg.norm(pt - projection)
+    
     def getOrientation(self, fincont, img):
 
+        currbestdev = -1
+        cornerapprox = cv.approxPolyDP(fincont, 0.02 * cv.arcLength(fincont, True), True) 
+        
+        cornercoords = [tuple(cpt[0]) for cpt in cornerapprox]
+        midpointcoords = []
+        for corner in range(len(cornerapprox)):
+            self.Pta = np.array(cornerapprox[corner][0])
+            self.Ptb = np.array(cornerapprox[(corner + 1) % len(cornerapprox)][0])
+            self.middles = self.midpointtake(self.Pta, self.Ptb)
 
-        rotimg = cv.minAreaRect(fincont) #rectangle around the contour
-        box = cv.boxPoints(rotimg)
-        box = box.astype(int)
-        self.rotation = rotimg[-1] #last value of minarearect is angle
+            cv.circle(img, (int(self.middles[0]), int(self.middles[1])), 5, (0,255,0), -1)
+            cv.circle(img, tuple(cornerapprox[corner][0]), 5, (0,0,255), -1)
+            
+            #print("Corners: ", tuple(self.Pta), tuple(self.Ptb))
+            #print("Midpoint: ", (int(self.middles[0]), int(self.middles[1])))
 
-        cntr = (int(rotimg[0][0]), int(rotimg[0][1]))
+            
+
+        pts = fincont[:,0,:] 
+
+        side_pts = {i: [] for i in range(len(cornercoords))}
+        for pt in pts:
+            min_dif = float('inf')
+            realside = -1
+            for i in range(len(cornercoords)):
+                dists = self.point_to_line_distance(pt, cornercoords[i], cornercoords[(i + 1) % len(cornercoords)]) 
+
+                if dists is None:
+                    continue
+                if dists < min_dif:
+                    min_dif = dists
+                    realside = i
+
+            if realside != -1:
+                side_pts[realside].append(tuple(pt))
+
+        for i, pts in side_pts.items():
+            if len(pts) < 2:
+                continue
+            self.deviation = self.straightline_true(pts)
+            if self.deviation > currbestdev:
+                currbestdev = self.deviation
+                self.deviatingside = (cornercoords[i], cornercoords[(i + 1) % len(cornercoords)])
+            
+            
+        if self.deviatingside:
+            self.Pta = np.array(self.deviatingside[0])
+            self.Ptb = np.array(self.deviatingside[1])
+            self.deviatingangle = self.getangle(self.Pta, self.Ptb)
+            self.refangle = self.deviatingangle
+            cv.line(img, tuple(self.Pta.astype(int)), tuple(self.Ptb.astype(int)), (0,255,255), 2)
+
+
+        
+        self.rotation = self.refangle
+        self.rotation = round(self.rotation, 2)
+
+        
 
         ############################################
         #Correct the rotations
@@ -98,31 +208,31 @@ class blockDetection(Detection):
         else:
             self.rotation = self.rotation
 
-        #######################################################
-        # code to find side that deviates, currently not entirely functional,
-        # compares all contourpoints' distance to the midpoint of the shape.the code
-        # works by quadrant of the contour instead of sides, this means that diagonal blocks arent computed correctly
-        # and corners are being seen as the biggest deviating point in the diagonal blocks. fix by assigning points to a specific side
-        # also check if comparing only the midpoints of each side would work.
-        ########################################################
+        self.rotarray.append(self.rotation)
 
-        center = (cntr[0], cntr[1])
-        contourpoints = fincont.reshape(-1, 2)
-        distance = np.linalg.norm(contourpoints - center, axis=1)
-        sides = contourpoints - center
-        angles = np.degrees(np.arctan2(sides[:,1], sides[:,0]))
+        self.centre = np.array(self.getcenterCoordinates(fincont))
+        self.centarray.append(self.centre)
 
-        left_side = contourpoints[(angles > 135) | (angles < -135)]
-        right_side = contourpoints[(angles < 45) & (angles > -45)]
-        top_side = contourpoints[(angles >= 45) & (angles <= 135)]
-        bottom_side = contourpoints[(angles < -45) & (angles > -135)]
-        deviating_side = min((left_side, right_side, top_side, bottom_side), key=lambda side: np.abs(np.mean(np.linalg.norm(side - center, axis=1)) - np.mean(distance)))
-        cv.polylines(img, [deviating_side.reshape(-1, 1, 2).astype(np.int32)], False, (0,0,255), 2)
+     
+
+      
+        
+        
+
 
         label = "  Rotation Angle: " + str(self.rotation)
-        
-        cv.putText(img, label, (cntr[0], cntr[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv.LINE_AA)
-        
-        print("Rotation: ", int(self.rotation))
-        return self.rotation
+        textbox = (self.centre[0] - 100, self.centre[1] - 25)
+        cv.putText(img, label, textbox, cv.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,255), 2)
 
+
+        
+        
+        return self.rotation, self.centre
+        #print("Rotation: ", int(self.rotation))
+       
+
+    def getVals(self):
+        testrot = self.rotarray
+        testcent = self.centarray
+        blocks =  dict(zip(testcent, testrot))
+        return blocks
