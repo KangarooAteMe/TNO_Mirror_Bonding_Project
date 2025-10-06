@@ -13,4 +13,11 @@ class Detection(ABC) :
     @abstractmethod
     def framegetter(self, frame):
         pass
-    
+
+    @abstractmethod
+    def getOrientation(self):
+        pass
+
+    @abstractmethod
+    def getVals():
+        pass
