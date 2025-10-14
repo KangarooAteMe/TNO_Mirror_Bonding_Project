@@ -1,6 +1,6 @@
 '''This code is supporting the use of an client to connect an 6 axis UR robotic arm to na RPI
 Authored by: Dave vermeulen (Original author)
-Version: 0.1.3
+Version: 0.2.0
 
 Note that this code isnt flawless might take some time debugging'''
 
@@ -9,66 +9,50 @@ import time
 
 class Network_client:
     def __init__(self, IP, PORT):
-        self.IP_Adress = IP
-        self.PORT_num = PORT
+        self.addr = (IP,PORT)
         
-        print(f'Socket created on IP_Addres: {self.IP_Adress} with PORT_num: {self.PORT_num}')
+        print(f'Socket created on following address: {self.addr}')
         
-        global Server_socket
-        Server_socket = sck.socket(sck.AF_INET, sck.SOCK_STREAM)
-        Server_socket.bind((self.IP_Adress, self.PORT_num))
-        
-    def start(self): 
-        Server_socket.listen(5)
-        print("Socket Listening on given Port number")
-        
-    def close(self): 
-        print("Socket closing down!!! ")
-        Server_socket.close()
+        self.server_socket = sck.socket(sck.AF_INET, sck.SOCK_STREAM)
+        self.server_socket.bind(self.addr)
     
-    def connect_client(self, message, trigger):
-        Client_socket, addr = Server_socket.accept()
+    def strt_socket(self):
+        self.server_socket.listen(5)
+        print(f"Socket with address: {self.addr} Started listening")
         
-        with Client_socket: 
-            
-            timestamp = time.strftime('%d-%m-%Y %H:%M:%S', time.localtime())
-            print(f"Client connection ESTABLISHED From {addr} at {timestamp}")
-            
-            Client_socket.send("Server is listening".encode('utf-8'))
-            
-            while True: 
+    def clse_socket(self):
+        print(f"!!!Socket with address: {self.addr} is CLOSING DOWN!!!")
+        self.server_socket.close()
+    
+    def connect_client(self):
+        self.client_socket, self.client_addr = self.server_socket.accept
+        print(f"Client connection ESTABLISHED From {self.client_addr} at {time.strftime('%d-%m-%Y %H:%M:%S', time.localtime())}")
+    
+    def disconnect_client(self):
+        print(f"CLOSING: {self.client_addr}")
+        self.client_socket.close 
+    
+    def receive_client(self):
+        data_receive = self.client_socket.recv(2048).decode('utf-8')
+        print(f"AWAITING Data from: {self.client_addr}")
         
-                datareceive = Client_socket.recv(2048).decode('utf-8')
-                print(f"Now receiving Data from {addr}")
-                
-                if not datareceive:
-                    print(f"No Data received from: {addr}:")
-                    break
-                
-                elif datareceive != trigger: 
-                    print(f"Data received from: {addr} does not equal trigger command")    
-                    break
-                
-                print(f"Trigger Received from: {addr}")
-                Client_socket.send(message.encode('utf-8'))
+        with data_receive: 
+            print(f"Data RECEIVED From: {self.client_addr} \n Data: {data_receive}")
             
-            print(f"Socket with Address: {addr} Is CLOSING")  
-            Client_socket.close()    
+            if not data_receive:
+                return None
+            else:
+                return data_receive
+
+    def send_client(self, message):
+        print(f"DATA TO SEND: {message}\n SENDING to : {self.client_addr}")
+        self.client_socket.send(message.encode('utf-8'))
+    
                     
         
         
 if __name__ == '__main__':
-    IP_adress = "192.168.0.3"
+    IP_address = "192.168.0.3"
     PORT_num = 62513
-    Message = "hi from server"
     
-    NetwkCl = Network_client(IP_adress, PORT_num)
-     
-    NetwkCl.start()
-    
-    try:
-        while True: 
-            NetwkCl.connect_client(Message, "TRG")
-    
-    except KeyboardInterrupt:
-        NetwkCl.close()
+    NetwkCl = Network_client(IP_address, PORT_num)
