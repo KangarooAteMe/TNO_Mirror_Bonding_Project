@@ -1,6 +1,6 @@
 '''This code is supporting the use of an client to connect an 6 axis UR robotic arm to na RPI
 Authored by: Dave vermeulen (Original author)
-Version: 0.2.0
+Version: 0.2.2
 
 Note that this code isnt flawless might take some time debugging'''
 
@@ -46,6 +46,7 @@ class Network_client:
                 return data_receive
 
     def send_client(self, message):
+        msg = str(message).replace("[","(").replace("]",")")
         print(f"DATA TO SEND: {message}\n SENDING to : {self.client_addr}")
         self.client_socket.send(message.encode('utf-8'))
     
