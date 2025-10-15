@@ -1,7 +1,7 @@
 
 '''This code is supporting the use of an client to connect an 6 axis UR robotic arm to na RPI
 Authored by: Dave vermeulen (Original author)
-Version: 0.2.2
+Version: 0.2.3
 
 Note that this code isnt flawless might take some time debugging'''
 
@@ -32,11 +32,10 @@ class Network_client:
     
     def disconnect_client(self):
         print(f"CLOSING: {self.client_addr}")
-        self.client_socket.close 
+        self.client_socket.close() 
     
     def receive_client(self):
         
-        with self.client_socket:
             
             data_receive = self.client_socket.recv(2048).decode('utf-8')
             print(f"AWAITING Data from: {self.client_addr}")
@@ -51,6 +50,8 @@ class Network_client:
         msg = str(message).replace("[","(").replace("]",")")
         print(f"DATA TO SEND: {msg}\n SENDING to : {self.client_addr}")
         self.client_socket.send(msg.encode('utf-8'))
+
+        
     
                     
         
