@@ -78,9 +78,3 @@ class syringe:
   
 
 
-syr = syringe(0.000001)
-
-#syr.forward(1000)
-syr.stepbackward(12000)
-
-
