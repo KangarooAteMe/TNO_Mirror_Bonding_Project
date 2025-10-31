@@ -3,12 +3,12 @@
 import time
 import cv2 as cv
 import numpy as np
-from camera import Camera
-from detection import Detection
-from blockDetect import blockDetection
+from camera import camera
+from detection import detection
+from blockDetect import blockdetection
 from state_enum import program_State
-from databuffer import Databuffer
-from coordinateconversion import CoordinateConversion
+from databuffer import databuffer
+from coordinateconversion import coordinateconversion
 import os 
 from Network_client import Network_client
 from math import atan2
@@ -33,18 +33,18 @@ def main():
     
 
   
-    block= blockDetection()
+    block= blockdetection()
     state = program_State.IDLE
     app = QApplication(sys.argv)
     window = MainWindow()
    
     #converter = CoordinateConversion()
-    buffer = Databuffer(window, block)
+    buffer = databuffer(window, block)
    
 
    
     netwcl = Network_client(IP, PORT)
-    cam = Camera()
+    cam = camera()
     
     
     
@@ -176,7 +176,7 @@ def harvest():
     
 
 
-class Databuffer:
+class databuffer:
     def __init__(self, mirror, block):
         self.mir = mirror
         self.blk = block
@@ -214,7 +214,7 @@ class Databuffer:
 
 
 
-class blockDetection(Detection):
+class blockdetection(Detection):
     def __init__(self):
         self.binary = None
         self.contours = None
@@ -231,7 +231,7 @@ class blockDetection(Detection):
         self.rotarray = []
         self.centarray = []
         self.combined_list = []
-        convert = CoordinateConversion()
+        convert = coordinateconversion()
         
 
 
@@ -459,7 +459,7 @@ class blockDetection(Detection):
 
         self.convertedarray = []
         for center in self.centarray:
-            self.converted_coordinates = CoordinateConversion().run(center[0], center[1])
+            self.converted_coordinates = coordinateconversion().run(center[0], center[1])
             print(self.converted_coordinates)
             self.convertedarray.append(self.converted_coordinates)
 
