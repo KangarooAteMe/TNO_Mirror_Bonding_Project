@@ -1,4 +1,4 @@
-from Statuscontrol import Statuscontrol
+
 from state_enum import program_State
 from Network_client import Network_client
 
@@ -36,7 +36,7 @@ class Camera:
                 elif self.state == "error":
                     self.state = self.update_state(program_State.ERROR)
 
-                elif self.state== "start":
+                elif self.state== "Cheese":
                     self.state = self.update_state(program_State.GET_BLOCK_COORDS)
                     
 
@@ -52,9 +52,9 @@ class Camera:
                     time.sleep(5)
                     msg = "glue_prep_2_done"
 
-                elif self.state == "final_position":
+                elif self.state == "Block":
                     msg = "mirror_capture_busy"
-                    self.state = self.update_state(program_State.GET_MIRROR_COORDS)
+                    self.state = self.update_state(program_State.GET_FINAL_COORDS)
 
                
                 return self.state
