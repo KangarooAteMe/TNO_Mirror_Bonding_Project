@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Detection(ABC) :
+class detection(ABC) :
     @abstractmethod
     def findContour(self) :
         pass
