@@ -1,5 +1,5 @@
 import numpy as np
-class CoordinateConversion:
+class coordinateconversion:
     def __init__(self): 
        self.camerapixels = {'bottomleft': (0, 736), 
                             'topleft': (0, 0),  
@@ -20,8 +20,8 @@ class CoordinateConversion:
 
         print(x)
         print(y)
-        x_converted = (-y  * (facy * -1) * self.corfactor) + (self.x_offset * -1) + 0.7
-        y_converted = (-x * (facx * -1) * self.corfactor) + (self.y_offset * -1) - 0.9
+        x_converted = (-y  * (facy * -1) * self.corfactor) + (self.x_offset * -1) 
+        y_converted = (-x * (facx * -1) * self.corfactor) + (self.y_offset * -1) 
         print(facx)
         print(facy)
         x_converted = round((x_converted / 1000), 6)
@@ -31,8 +31,8 @@ class CoordinateConversion:
         return self.objectpos
 
     def factorcalculation(self):
-        self.scalefactorx = -114.21 / 1076
-        self.scalefactory = -77.42 /  728
+        self.scalefactorx = -114.21 / 1080
+        self.scalefactory = -77.42 /  730
         return self.scalefactorx , self.scalefactory
 
    
