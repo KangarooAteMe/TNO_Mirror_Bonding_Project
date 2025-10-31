@@ -4,9 +4,7 @@ import time
 import cv2 as cv
 import numpy as np
 from camera import Camera
-from Statuscontrol import Statuscontrol
 from detection import Detection
-from mirrorDetect import MirrorDetect
 from blockDetect import blockDetection
 from state_enum import program_State
 from databuffer import Databuffer
@@ -14,10 +12,8 @@ from coordinateconversion import CoordinateConversion
 import os 
 from Network_client import Network_client
 from math import atan2
-import gxipy as gx
 import sys
 from harvesters.core import Harvester
-from PIL import Image
 from PyQt6.QtWidgets import QApplication
 from window import MainWindow
 from pathlib import Path
