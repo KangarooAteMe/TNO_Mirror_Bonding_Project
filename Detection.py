@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-import cv2 as cv
-import camera
+
 
 class Detection(ABC) :
     @abstractmethod
@@ -21,3 +20,4 @@ class Detection(ABC) :
     @abstractmethod
     def getVals():
         pass
+    
