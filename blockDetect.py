@@ -1,11 +1,11 @@
 
-from detection import Detection
+from detection import detection
 import numpy as np
 import cv2 as cv
 from math import atan2
 
 
-class blockDetection(Detection):
+class blockDetection(detection):
     def __init__(self):
         self.binary = None
         self.contours = None
