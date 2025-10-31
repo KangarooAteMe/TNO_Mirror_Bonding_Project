@@ -22,8 +22,6 @@ class MainWindow(QMainWindow):
         self.data = []
         self.Errormsg = QMessageBox(self)
 
-        #state = program_State()
-
         
 
 
@@ -71,7 +69,7 @@ class MainWindow(QMainWindow):
         refresh = self.makeWidget(self.minimumsize, self.prefferedsize, self.maximumsize, QPushButton("refresh"))
         refresh.widget().clicked.connect(self.showimg)
 
-        #if 
+        
        
         
         anchor = QGraphicsAnchorLayout()
@@ -164,17 +162,17 @@ class MainWindow(QMainWindow):
             print("Data imported successfully:")
             for row in self.data:
                 if row[0] == '':
-                
                     continue
                 
             
                 coords = (row[1].split())
                 print(coords)
 
-                x, y, z, rx, ry, rz = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3]), int(coords[4]), int(coords[5]) 
-                coordstosend = [x, y, z, rx, ry, rz]
-                self.mirrordata.append[coordstosend]
-                print(coordstosend)
+                x, y, z, rx, ry, rz = float(coords[0]), float(coords[1]), float(coords[2]), float(coords[3]), float(coords[4]), float(coords[5]) 
+                coordstosend = [int(row[0]), x, y, z, rx, ry, rz]
+                self.mirrordata.append(coordstosend)
+                print(f"final array:  {self.mirrordata} ")
+                #print(coordstosend)
 
                 print(type(coordstosend))
             
@@ -221,15 +219,15 @@ class MainWindow(QMainWindow):
 
         for row in data:
             if row[0] == '':
-                
                 continue
+
             
             
             coords = (row[1].split())
             print(coords)
 
-            x, y, z, rx, ry, rz = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3]), int(coords[4]), int(coords[5]) 
-            coordstosend = [x, y, z, rx, ry, rz]
+            x, y, z, rx, ry, rz = float(coords[0]), float(coords[1]), float(coords[2]), float(coords[3]), float(coords[4]), float(coords[5]) 
+            coordstosend = [int(row[0]), x, y, z, rx, ry, rz]
             self.mirrordata.append[coordstosend]
             print(coordstosend)
             print(type(coordstosend))
