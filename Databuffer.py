@@ -1,4 +1,4 @@
-from detection import Detection
+from detection import detection
 
 class Databuffer:
     def __init__(self, mirror, block):
