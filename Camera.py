@@ -6,7 +6,7 @@ import cv2 as cv
 import os
 from harvesters.core import Harvester
 import time
-class Camera:
+class camera:
     def __init__(self):
         
         self.state = program_State.IDLE
