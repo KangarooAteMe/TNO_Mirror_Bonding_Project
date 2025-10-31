@@ -1,10 +1,10 @@
 
 
-from detection import Detection
+from detection import detection
 import cv2 as cv
 import numpy as np
 
-class MirrorDetect(Detection):
+class mirrordetect(Detection):
 	def __init__ (self):
 
 		############
