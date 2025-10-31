@@ -5,7 +5,7 @@ import cv2 as cv
 from math import atan2
 
 
-class blockDetection(detection):
+class blockdetection(detection):
     def __init__(self):
         self.binary = None
         self.contours = None
